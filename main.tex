@@ -12,6 +12,9 @@
 \section{Abstract}
 
 \section{Introduction}
+\subsection{Threat Model?}
+A.k.a. scare tactics
+
 \subsection{Memory problems}
 \begin{itemize}
     \item Null dereference
@@ -47,13 +50,78 @@
 \end{enumerate}
 
 \section{Background}
+\subsection{Safety of Rust}
+\begin{enumerate}
+    \item In-depth safety model
+    \begin{itemize}
+        \item Memory safety as type safety
+        \item Static checking/guarantees
+        \item Limitations
+        \item Restrictions
+    \end{itemize}
+    \item Proven correct by RustBelt
+    \begin{itemize}
+        \item This is a stronger claim than what is actually true. This paragraph should talk about what RustBelt actually verifies, and why that's still enough for us.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Unsafe Rust}
+\begin{enumerate}
+    \item Background on rest of the group?
+    \item Things allowed by 'unsafe', causing holes in safety
+\end{enumerate}
+
+\subsection{Syntactic and Semantic correctness}
+\begin{enumerate}
+    \item Big idea: programmers aren't trying to write incorrect code. The programmer has some sort of internal argument for why their code is correct.
+    \item Revisit restrictions of Safe Rust above
+    \item Show that we can satisfy the semantic meaning of type safety guarantees even when the static type checker is overly restrictive
+    \item Canonical examples: Cell, Mutex
+    \item All code in our project should be "correct", that is, we want all of our code to have the properties of Safe Rust
+    \item We should be able to find semantic correctness in our "unsafe" code
+\end{enumerate}
+
+\subsection{RustBelt for Unsafe Rust}
+\begin{enumerate}
+    \item Extensible safety (definition, how Rustbelt ensures it, why it matters for our project)
+    \item Generate obligations that user must prove hold before they can say that the implemented API is "safe"
+    \item Verify that an implementation actually implements the API
+    \item Most judgements/proof obligations made at the typing layer
+\end{enumerate}
 
 \section{Plan}
+\subsection{Isolation and Categorization}
+\begin{enumerate}
+    \item Locate and isolate instances of "unsafe" in codebase
+    \item Categorize different patterns
+    \item (maybe?) reduce size to smallest necessary unsafe block
+\end{enumerate}
+
+\subsection{Verification}
+\begin{enumerate}
+    \item Data structures (starting w/TakeCell) by extending RustBelt
+    \item ??
+\end{enumerate}
 
 \section{Timeline}
+Before I graduate
 
 \section{Related Work/Alternative approaches}
-Testing 1 2
+Fill this in with details from the presentation
+\begin{enumerate}
+    \item Improved static checking
+    \begin{itemize}
+        \item More complicated static checking drastically increases runtime which decreases usability.
+        \item Current systems can't automatically reason about certain things
+    \end{itemize}
+    
+    \item Software testing
+    
+    \item Problem detection/mitigation
+    
+    \item Alex's project
+    
+\end{enumerate}
 
 \section{Summary}
 

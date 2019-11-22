@@ -12,9 +12,19 @@
 \section{Abstract}
 
 \section{Introduction}
+
+%NHB: in the intro don't use explicit subsections
+%this is less of a threat model, and more a lay of the land outlining problems.
+%Explicit threat modeling for your defense, ie, what reviewers should judge you
+%against, comes later.
 \subsection{Threat Model?}
 A.k.a. scare tactics
 
+%NHB: these are what rustbelt actually addresses. For your proposal lets thing
+%big: extensions to the rustbelt proofs -- is this actually
+%the desirable set of things to verify?? What would an ideal set of proofs be?
+%You can sketch out a bigger problem than we'll have time to solve -- but
+%thinking about how to push further than Rustbelt is invaluable.
 \subsection{Common errors}
 
 \begin{enumerate}
@@ -57,6 +67,9 @@ Because these are encoded into the type system, we can statically type-check our
 
 Low-level systems code has operations that would break these syntactic restrictions. For operating systems (the context for the rest of this paper), these include (types of Unsafe Rust). These operations are restricted by the type-checker and therefore do not compile. Rust provides a backdoor in the form of the keyword "unsafe".
 
+%NHB: this is the "state-of-the-art" section of your intro. Highlight the
+%contributions they made, but also show the remaining gaps. You've identified
+%and motivated a problem by, show that the state-of-the-art doesn't solve it.
 \subsection{RustBelt}
 \begin{enumerate}
     \item First, is (safe) Rust as safe as it claims to be?
@@ -64,12 +77,21 @@ Low-level systems code has operations that would break these syntactic restricti
     \item Syntactic vs. semantic correctness
 \end{enumerate}
 
+%NHB: can we extend the rustbelt proofs to new properties? Can we extend them
+%(or perhaps a subset) to construts that Rustbelt can't currently handle? What
+%are the boundaries of Rustbelt, and how can we push them out.
 \subsection{Our contribution}
 \begin{enumerate}
     \item Patterns of Unsafe Rust in systems code
     \item Verified implementation for ZKOS (data structures, other)
     \item ??
 \end{enumerate}
+
+%NHB: Side note: it's okay to have a master thesis that focuses this much on
+%rustbelt.  for a conference paper you'd want to be more agressive about
+%claiming new ground and showing additional contributions (vice extensions) to
+%rustbelt. Guard against this becoming an ode to rustbelt, or excessively focued
+%on what they've done instead of what you've done.
 
 \section{Background}
 \subsection{Safety of Rust}
@@ -83,11 +105,15 @@ Low-level systems code has operations that would break these syntactic restricti
     \end{itemize}
     \item Proven correct by RustBelt
     \begin{itemize}
+        %NHB: and also highlight why it may *not* be enough, and give more depth
+        %on the remaining problems we will address
         \item This is a stronger claim than what is actually true. This paragraph should talk about what RustBelt actually verifies, and why that's still enough for us.
     \end{itemize}
 \end{enumerate}
 
 \subsection{Unsafe Rust}
+%NHB: be sure to highight uses of unsafe by OS, and why they differ from user
+%space code that RustBelt focused on.
 \begin{enumerate}
     \item Background on rest of the group?
     \item Things allowed by 'unsafe', causing holes in safety
@@ -112,6 +138,9 @@ Low-level systems code has operations that would break these syntactic restricti
 \end{enumerate}
 
 \section{Plan}
+
+%NHB: emphasize that OS code has unique requirements for unsafe that need to be
+%addressed
 \subsection{Isolation and Categorization}
 \begin{enumerate}
     \item Locate and isolate instances of "unsafe" in codebase
@@ -119,6 +148,8 @@ Low-level systems code has operations that would break these syntactic restricti
     \item (maybe?) reduce size to smallest necessary unsafe block
 \end{enumerate}
 
+%NHB: highlight things that come out of this case study for differences with
+%rustbelt / new things for OS code.
 \subsection{Verification}
 \begin{enumerate}
     \item Data structures (starting w/TakeCell) by extending RustBelt

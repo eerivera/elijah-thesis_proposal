@@ -15,12 +15,24 @@
 \subsection{Threat Model?}
 A.k.a. scare tactics
 
-\subsection{Memory problems}
-\begin{itemize}
-    \item Null dereference
-    \item Use-after-free
-    \item Aliasing/Mutation (race conditions)
-\end{itemize}
+\subsection{Common errors}
+
+\begin{enumerate}
+    \item Memory errors
+        \begin{itemize}
+            \item Null dereference
+            \item Use-after-free
+            \item Aliasing/Mutation (race conditions)
+        \end{itemize}
+    \item Data races
+    \item Dangers of having these problems
+\end{enumerate}
+
+In the past decade, memory errors have comprised $\sim70\%$ of discovered vulnerabilities. These errors includes (but is not limited to) dereferencing null pointers, accessing memory after it has been deallocated/freed (also known as use-after-free), or accessing memory before it has been initialized. 
+
+Concurrent programs also have additional opportunities for error with data races (explain data races here).
+
+Reasoning about these errors is difficult. Tools continue to be developed which help in detecting/mitigating these errors, but we still continue to see memory errors and data races in software systems of every scale. We also see how these errors can be exploited into large vulnerabilities. (give examples here)
 
 \subsection{Rust}
 \begin{enumerate}
@@ -28,12 +40,22 @@ A.k.a. scare tactics
     \item Memory safety as type safety, statically check
 \end{enumerate}
 
+The programming language Rust has recently seen increased usage in the computer systems community because it claims to statically prevent the above errors. Specifically, the developers claim that (quote the nomicon here).
+
+(Rust's approach to memory safety)
+
+(Rust's approach to lifetimes)
+
+Because these are encoded into the type system, we can statically type-check our program. If the program passes, then the memory and lifetime guarantees must hold and our program is memory safe.
+
 \subsection{Unsafe Rust}
 \begin{enumerate}
     \item Syntactic restrictions prevent low-level programming paradigms
     \item Unsafe as an escape hatch
     \item Brings us back to C levels of safety (so none)
 \end{enumerate}
+
+Low-level systems code has operations that would break these syntactic restrictions. For operating systems (the context for the rest of this paper), these include (types of Unsafe Rust). These operations are restricted by the type-checker and therefore do not compile. Rust provides a backdoor in the form of the keyword "unsafe".
 
 \subsection{RustBelt}
 \begin{enumerate}

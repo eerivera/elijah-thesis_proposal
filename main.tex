@@ -141,16 +141,23 @@ We fully expect to encounter paradigms of "unsafe" use that do not fall into the
 This is not the only way we could approach adding safety to an operating system. Here we will discuss other approaches that have been taken and the trade-offs they have.
 
 \subsection{Improved static checking}
-    \begin{itemize}
-        \item More complicated static checking drastically increases runtime which decreases usability.
-        \item Current systems can't automatically reason about certain things
-    \end{itemize}
-    
+Instead of only addressing the current uses of "unsafe" in the codebase, we could instead attempt to improve the overall static type-checking capabilities of Rust, perhaps incorporating some of the reasoning about syntactic and semantic correctness.
+
+Unfortunately, current systems have a difficult time with automated reasoning about programs without a significant additional burden on the programmer. Rust already has a more steep learning curve with the inclusion of lifetimes in the type system, and to include even more may present an undue burden on the programmer.
+
 \subsection{Software testing}
+We could instead use standard bug-finding techniques to find errors in the system, including writing large test suites with many edge cases and using fuzzers. 
+
+We actually recommend this approach be pursued in combination with the proof techniques in our proposed work. While having proofs of correctness offers guarantees of safety that one cannot acquire otherwise, these proofs will always rely on assumptions of the system. Formally verifying a system is not enough to guarantee that it is error-free. Bug-finding tools can serve to spot-check and make sure the system assumptions hold.
+
+% TODO - https://www.cs.purdue.edu/homes/pfonseca/papers/eurosys2017-dsbugs.pdf
     
-\subsection{Problem detection/mitigation}
-    
-\subsection{Alex's project}
+\subsection{Error detection/mitigation}
+Instead of the above compile-time options, checks can be included at runtime to detect when errors have occurred and attempt to mitigate the damage done. 
+
+This again has no guarantees of safety. However, in places where proof boundaries exist, having runtime instrumentation to check that our assumptions haven't been violated can serve to reinforce our confidence in the safety of the system.
+
+One specific place where this can be seen is the hardware boundary. %TODO - info on Alex's project with tags, contact him for more info
 
 \section{Summary}
 % TODO

@@ -1,91 +1,82 @@
-\documentclass{article}
+\documentclass[12pt]{article}
 \usepackage[utf8]{inputenc}
-
-\title{Thesis Proposal}
-\author{Elijah Rivera}
-\date{November 2019}
+\usepackage{setspace}
+\doublespacing
 
 \begin{document}
 
-\maketitle
+\begin{titlepage}
+   \begin{center}
+       \vspace*{1cm}
+       Massachusetts Institute of Technology \\
+       Department of Electrical Engineering and Computer Science
+ 
+       \vspace{1cm}
+       Proposal for Thesis Research in Partial Fulfillment \\
+       of the Requirements for the Degree of \\
+       Master of Engineering in Electrical Engineering and Computer Science
+ 
+       \vspace{1cm}
+ 
+       Formal Verification of Safety Guarantees for Unsafe Code in a Rust-based Operating System
+ 
+       \vspace{1cm}
+       Elijah Rivera \\
+       December 2019
+ 
+       \vspace{1cm}
+        Supervisor: Professor Howard Shrobe
+   \end{center}
+\end{titlepage}
 
 \section{Abstract}
+%TODO
 
 \section{Introduction}
-
-%NHB: in the intro don't use explicit subsections
-%this is less of a threat model, and more a lay of the land outlining problems.
-%Explicit threat modeling for your defense, ie, what reviewers should judge you
-%against, comes later.
-\subsection{Threat Model?}
-A.k.a. scare tactics
 
 %NHB: these are what rustbelt actually addresses. For your proposal lets thing
 %big: extensions to the rustbelt proofs -- is this actually
 %the desirable set of things to verify?? What would an ideal set of proofs be?
 %You can sketch out a bigger problem than we'll have time to solve -- but
 %thinking about how to push further than Rustbelt is invaluable.
-\subsection{Common errors}
+Memory errors in programs have been a major source of errors and exploitable vulnerabilities for a long time. Microsoft recently did a study where they found that in the past decade, memory errors have comprised $\sim70\%$ of discovered vulnerabilities in their products. %TODO - quote stat here https://github.com/microsoft/MSRC-Security-Research/blob/master/presentations/2019_02_BlueHatIL/2019_01%20-%20BlueHatIL%20-%20Trends%2C%20challenge%2C%20and%20shifts%20in%20software%20vulnerability%20mitigation.pdf
+These errors include explicit corruption of the stack or heap of a program, accessing memory after it has been deallocated/freed (also known as use-after-free), accessing memory before it has been initialized, accessing memory that is "out of bounds" (including the null address), and treating memory with a certain type as if it has a different type.
 
-\begin{enumerate}
-    \item Memory errors
-        \begin{itemize}
-            \item Null dereference
-            \item Use-after-free
-            \item Aliasing/Mutation (race conditions)
-        \end{itemize}
-    \item Data races
-    \item Dangers of having these problems
-\end{enumerate}
+Concurrent programs also have additional opportunities for errors with data races, where a timing or scheduling difference could affect the final result of a program. These errors occur when two or more threads have access to the same memory location and at least one of the threads is writing to that memory without using a proper locking discipline. %TODO - quote data race paper?
 
-In the past decade, memory errors have comprised $\sim70\%$ of discovered vulnerabilities. These errors includes (but is not limited to) dereferencing null pointers, accessing memory after it has been deallocated/freed (also known as use-after-free), or accessing memory before it has been initialized. 
-
-Concurrent programs also have additional opportunities for error with data races (explain data races here).
-
-Reasoning about these errors is difficult. Tools continue to be developed which help in detecting/mitigating these errors, but we still continue to see memory errors and data races in software systems of every scale. We also see how these errors can be exploited into large vulnerabilities. (give examples here)
+Reasoning about these errors is difficult. Tools continue to be developed which help in detecting/mitigating these errors, but we still continue to see memory errors and data races in software systems of every scale. We also see how these errors can be exploited into large vulnerabilities. %TODO - give examples here?
 
 \subsection{Rust}
-\begin{enumerate}
-    \item Safety model
-    \item Memory safety as type safety, statically check
-\end{enumerate}
-
-The programming language Rust has recently seen increased usage in the computer systems community because it claims to statically prevent the above errors. Specifically, the developers claim that (quote the nomicon here).
-
-(Rust's approach to memory safety)
-
-(Rust's approach to lifetimes)
-
-Because these are encoded into the type system, we can statically type-check our program. If the program passes, then the memory and lifetime guarantees must hold and our program is memory safe.
+The programming language Rust has recently seen increased usage in the computer systems community because it claims to statically prevent many of above errors. Specifically, the developers claim that ``Rust guarantees memory safety and data-race freedom." % TODO - quote https://doc.rust-lang.org/1.0.0/style/safety/README.html.
+``If all you do is write Safe Rust, you will never have to worry about type-safety or memory-safety. You will never endure a dangling pointer, a use-after-free, or any other kind of Undefined Behavior."
+% TODO - quote https://doc.rust-lang.org/nomicon/meet-safe-and-unsafe.html
+Rust's ability to make these claims relies on its novel approach to memory safety as type safety, using an ownership system. By encoding information about the kinds of reference to an object or the lifetime of the object into the type system, Rust is able to utilize existing compiler techniques to statically ensure that programs that compile meet the memory-safety guarantees above.
 
 \subsection{Unsafe Rust}
-\begin{enumerate}
-    \item Syntactic restrictions prevent low-level programming paradigms
-    \item Unsafe as an escape hatch
-    \item Brings us back to C levels of safety (so none)
-\end{enumerate}
+However, many low-level systems have operations that would break these compiler restrictions. The rest of this paper will be from the context of operating systems. In operating systems, some of the operations that must necessarily break these restrictions include memory-mapped I/O operations, inlined sections of assembly code, and direct pointer arithmetic and related instructions. These operations are prevented by different type-checker restrictions and therefore do not compile. For this reason, Rust provides a backdoor in the form of the keyword "unsafe".
 
-Low-level systems code has operations that would break these syntactic restrictions. For operating systems (the context for the rest of this paper), these include (types of Unsafe Rust). These operations are restricted by the type-checker and therefore do not compile. Rust provides a backdoor in the form of the keyword "unsafe".
+In Rust, "unsafe" signals to the compiler that the programmer is writing code that he/she knows will not pass the Rust type-checker. The burden of verifying that the code adheres to memory-safety and type-safety falls back onto the programmer. This means that code that includes a dependence on "unsafe" ultimately has the same level of guarantee as pre-Rust solutions: "hopefully the programmer is correct."
+
+Unfortunately, this backdoor doesn't just undermine the guarantees of code that contains "unsafe" section inserted by the programmer. Many of the Rust standard library data structures also contain some amount of "unsafe" code. Any code that relies on these data structures also now has a similar lack of the earlier formal guarantees. Now even though we started with a language that is statically safe, even using the standard libraries can potentially violate this safety.
 
 %NHB: this is the "state-of-the-art" section of your intro. Highlight the
 %contributions they made, but also show the remaining gaps. You've identified
 %and motivated a problem by, show that the state-of-the-art doesn't solve it.
 \subsection{RustBelt}
-\begin{enumerate}
-    \item First, is (safe) Rust as safe as it claims to be?
-    \item Is the Rust "extensible" model of safety valid for unsafe programs as well?
-    \item Syntactic vs. semantic correctness
-\end{enumerate}
+In fact, even making the claim that Rust without "unsafe" (Safe Rust, as designated by the Rust community) is statically safe is still a claim without proof. The RustBelt project has made significant progress in this domain so far. RustBelt is a collection of machine-checked proofs in Coq that formalizes a large subset of Rust and proves that its semantics are correct.
 
+It then goes further, and provides a method for proving correctness for new libraries which depend on "unsafe" code. It uses this method to verify correctness for a large portion of the standard libraries. This enables us to once again confidently make strong claims about the type-safety and memory-safety of Rust.
+
+But this confidence is limited. These proofs still only apply to programs written in Safe Rust whose dependencies are limited to the standard libraries checked by RustBelt. In the world of operating systems, this is simply not enough.
 %NHB: can we extend the rustbelt proofs to new properties? Can we extend them
-%(or perhaps a subset) to construts that Rustbelt can't currently handle? What
+%(or perhaps a subset) to constructs that Rustbelt can't currently handle? What
 %are the boundaries of Rustbelt, and how can we push them out.
 \subsection{Our contribution}
-\begin{enumerate}
-    \item Patterns of Unsafe Rust in systems code
-    \item Verified implementation for ZKOS (data structures, other)
-    \item ??
-\end{enumerate}
+In this project, our goal is to extend the confident guarantees of Safe Rust to low-level systems programming paradigms. We will take an operating system written in Rust as an example, categorize patterns of necessary usage for "unsafe" code, and attempt to statically verify that this usage still adheres to the safety guarantees of Rust mentioned previously. 
+
+Depending on the patterns encountered, the needs of this guarantee may differ. For many of the internal data structures we expect the process to look similar to the extensible approach taken by RustBelt, while we expect new approaches to be necessary for other patterns of "unsafe" usage.
+
+One of the first ways to increase confidence in the code is to decrease the number of places where "unsafe" is used. Thus, before attempting to make claims about necessary "unsafe" code, we will attempt to isolate and reduce the usages of "unsafe" where possible.
 
 %NHB: Side note: it's okay to have a master thesis that focuses this much on
 %rustbelt.  for a conference paper you'd want to be more agressive about
@@ -144,6 +135,7 @@ Low-level systems code has operations that would break these syntactic restricti
 \subsection{Isolation and Categorization}
 \begin{enumerate}
     \item Locate and isolate instances of "unsafe" in codebase
+    %TODO - include preliminary work in proposed work section (not here, later)
     \item Categorize different patterns
     \item (maybe?) reduce size to smallest necessary unsafe block
 \end{enumerate}

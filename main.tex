@@ -86,47 +86,39 @@ One of the first ways to increase confidence in the code is to decrease the numb
 
 \section{Background}
 \subsection{Safety of Rust}
-\begin{enumerate}
-    \item In-depth safety model
-    \begin{itemize}
-        \item Memory safety as type safety
-        \item Static checking/guarantees
-        \item Limitations
-        \item Restrictions
-    \end{itemize}
-    \item Proven correct by RustBelt
-    \begin{itemize}
-        %NHB: and also highlight why it may *not* be enough, and give more depth
-        %on the remaining problems we will address
-        \item This is a stronger claim than what is actually true. This paragraph should talk about what RustBelt actually verifies, and why that's still enough for us.
-    \end{itemize}
-\end{enumerate}
+Rust's approach to memory safety involves the use of an extensive ownership system integrated into its type system. In this system, variable bindings "have ownership" of the data they're bound to. %TODO - https://doc.rust-lang.org/1.9.0/book/ownership.html
+For this reason, Rust also prevents more than one variable from being bound to a piece of data. Reassignment is processed with move or copy semantics, instead of aliasing as in many other programming languages.
+%TODO - should I include an example here.
 
-\subsection{Unsafe Rust}
-%NHB: be sure to highight uses of unsafe by OS, and why they differ from user
-%space code that RustBelt focused on.
-\begin{enumerate}
-    \item Background on rest of the group?
-    \item Things allowed by 'unsafe', causing holes in safety
-\end{enumerate}
+Rust also has the notion of "borrowing", which creates a reference to something without taking ownership of it. There are both mutable and immutable borrows, and the type system enforces that you do not have more than one reference to a piece of data when one of those references is mutable. This enables the type system to statically check for and prevent data races at compile time.
+
+A reference also has an associated lifetime marked in the type system. The lifetime of the reference is never allowed to exceed the lifetime of the variable binding itself. This prevents "use-after-free" errors.
+
+These ownership rules are formalized in the RustBelt system and proven correct for its formalization of Safe Rust. However, they are not guaranteed to hold in places where "unsafe" is used. RustBelt attempts to reason about these sections of code with the ideas of syntactic and semantic correctness.
 
 \subsection{Syntactic and Semantic correctness}
-\begin{enumerate}
-    \item Big idea: programmers aren't trying to write incorrect code. The programmer has some sort of internal argument for why their code is correct.
-    \item Revisit restrictions of Safe Rust above
-    \item Show that we can satisfy the semantic meaning of type safety guarantees even when the static type checker is overly restrictive
-    \item Canonical examples: Cell, Mutex
-    \item All code in our project should be "correct", that is, we want all of our code to have the properties of Safe Rust
-    \item We should be able to find semantic correctness in our "unsafe" code
-\end{enumerate}
+Most systems programmers are not trying to write incorrect code. The programmer has some sort of internal intuitive argument for why their code is correct and type-safe, even though the compiler may disagree.
+
+One canonical example of this is interior mutability, or the idea of mutation through a shared reference. This is explicitly forbidden by the ownership rules above, which say that if I have a mutable reference I can't have more than one reference. However, this functionality is still available in Rust, through a standard library construct called Cell.
+%TODO - should I expand on Cell more here?
+
+By necessity, Cell is implemented in Rust using the "unsafe" keyword. However, the RustBelt project was still able to prove that its API adhered to the restrictions of Safe Rust. That is, through careful restrictions of "unsafe" usage, the code still behaves like safe code (semantic correctness), even though it doesn't adhere to the strict rules of the type-checker (syntactic correctness).
 
 \subsection{RustBelt for Unsafe Rust}
+
 \begin{enumerate}
     \item Extensible safety (definition, how Rustbelt ensures it, why it matters for our project)
     \item Generate obligations that user must prove hold before they can say that the implemented API is "safe"
     \item Verify that an implementation actually implements the API
     \item Most judgements/proof obligations made at the typing layer
 \end{enumerate}
+
+\subsection{Why RustBelt fails us}
+All of our data structures should be semantically correct
+
+This only covers one type of "unsafe" usage in OS code, and is not enough
+%NHB: be sure to highight uses of unsafe by OS, and why they differ from user
+%space code that RustBelt focused on.
 
 \section{Plan}
 

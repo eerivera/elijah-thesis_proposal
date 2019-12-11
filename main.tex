@@ -46,7 +46,7 @@ Our proposed project will investigate the low-level programming paradigms found 
 \section{Introduction}
 Most modern-day low-level systems are written in C or C++. These languages have little to no enforcement of type and memory safety, nor protection against concurrency bugs.
 
-Memory errors in programs are a major source of errors and exploitable vulnerabilities dating as far back as 1996~\cite{one1996smashing}. At BlueHat Israel 2019, Microsoft disclosed that in the past decade, memory errors have comprised $\sim70\%$ of discovered vulnerabilities in their products~\cite{miller2019trends}. These errors include accessing memory after it has been deallocated/freed (also known as use-after-free), accessing memory before it has been initialized, accessing memory that is out-of-bounds (including the null address), and treating memory with a certain type as if it has a different type. Writers of C/C++ can easily accidentally write programs with any of these errors.
+Memory errors in programs are a major source of errors and exploitable vulnerabilities dating as far back as 1996~\cite{one1996smashing}. At BlueHat Israel 2019, Microsoft disclosed that in the past decade, memory errors have comprised $\sim70\%$ of discovered vulnerabilities in their products~\cite{miller2019trends}. These errors include accessing memory after it has been deallocated/freed (also known as use-after-free), accessing memory before it has been initialized, accessing memory that is out-of-bounds (including the null address), and treating memory with a certain type as if it has a different type. C/C++ developers often easily introduce these errors in their programs by accident.
 
 Concurrent programs also have additional opportunities for errors with data races, where a timing or scheduling difference could affect the final result of a program. These errors occur when two or more threads have access to the same memory location and at least one of the threads is writing to that memory without using a proper locking discipline. C/C++ have no built-in protections against a programmer writing incorrect concurrent code. Incorrect concurrent code can be dangerous. A 2012 study at Columbia University showed that concurrency errors can also be exploited~\cite{yang2012concurrency}.
 
@@ -57,23 +57,23 @@ A recent approach to solving this problem is found in the programming language R
 ``you will never have to worry about type-safety or memory-safety. You will never endure a dangling pointer, a use-after-free, or any other kind of Undefined Behavior."\cite{rust_nomicon}
 Rust's ability to make these claims relies on its novel approach to memory safety as type safety, using an ownership system. By encoding information about the kinds of reference to an object or the lifetime of the object into the type system, Rust is able to utilize existing compiler techniques to statically ensure that programs that compile meet the memory safety guarantees above.
 
-Operating systems are pieces of critical infrastructure. When compromised, an adversary can gain access not only to the operating system but potentially to all other software running on top. Writing an operating system in Rust provides memory safety guarantees to a security-critical part of computer infrastructure.
+Operating systems are crucial for the security of the entire system. When compromised, an adversary can gain access not only to the operating system but potentially to all other software running on top. Writing an operating system in Rust provides memory safety guarantees to a security-critical part of computer infrastructure.
 
 However, operating systems have operations that must necessarily break the Rust compiler restrictions. These operations include memory-mapped I/O operations, inline assembly code, direct pointer arithmetic and related instructions, and some other data structures with complex ownership requirements. These operations are prevented by different type-checker restrictions and therefore do not compile. For example, memory-mapped I/O operations often necessitate writing directly to a specific constant memory address. However, Rust's compiler prevents direct access to any specific memory address, to protect against mutating a piece of data that is potentially pointed to somewhere else in the program.
 
 To get around these restrictions, Rust provides a backdoor in the form of the keyword \texttt{unsafe}. In Rust, \texttt{unsafe} signals to the compiler that the programmer is writing code that he/she knows will not pass the Rust type-checker. The burden of verifying that the code adheres to memory-safety and type-safety falls back onto the programmer. This means that code that includes a dependence on \texttt{unsafe} ultimately has the same level of guarantee as pre-Rust solutions: ``hopefully the programmer is correct."
 
-Unfortunately, this backdoor doesn't just undermine the guarantees of code that contains \texttt{unsafe} section inserted by the programmer. Since \texttt{unsafe} forces the compiler to ignore certain checks, any values modified within or returned by \texttt{unsafe} code could break all type and memory safety guarantees, even once passed to safe code. Once \texttt{unsafe} is used, everything it transitively interacts with is also necessarily \texttt{unsafe}. What's worse is that many of the Rust standard library data structures also contain some amount of \texttt{unsafe} code. Any code that relies on these data structures also now has a similar lack of the earlier formal guarantees. Now even though we started with a language that is statically safe, even using the standard libraries can potentially violate this safety.
+Unfortunately, this backdoor does not just undermine the guarantees of code that contains \texttt{unsafe} section inserted by the programmer. Since \texttt{unsafe} forces the compiler to ignore certain checks, any values modified within or returned by \texttt{unsafe} code could break all type and memory safety guarantees, even once passed to safe code. Once \texttt{unsafe} is used, everything it transitively interacts with is also necessarily \texttt{unsafe}. What is worse is that many of the Rust standard library data structures also contain some amount of \texttt{unsafe} code. Any code that relies on these data structures also now has a similar lack of the earlier formal guarantees. Now even though we started with a language that is statically safe, even using the standard libraries can potentially violate this safety.
 
 The RustBelt project~\cite{jung2017rustbelt} was able to formalize a large subset of Rust and proves that its semantics are correct and do uphold the claimed guarantees. The project began with Safe Rust, which is just Rust without any uses of the \texttt{unsafe} keyword. 
 
 RustBelt formalized a subset of Rust's mid-level intermediate representation (MIR) in Coq, and then produced machine checked proofs that verify correctness. It then goes further, and provides a method for proving correctness for new libraries which depend on \texttt{unsafe} code. It uses this method to verify correctness for a large portion of the standard libraries. This enables us to once again confidently assert the type-safety and memory-safety guarantees of Rust's static type-checker.
 
-But this confidence is limited. These proofs still only apply to programs written in Safe Rust whose dependencies are limited to the standard libraries checked by RustBelt. In the world of operating systems, this is simply not enough. %TODO - are there other limitations?
+However, this confidence is limited. These proofs still only apply to programs written in Safe Rust whose dependencies are limited to the standard libraries checked by RustBelt. In the world of operating systems, this is simply not enough. %TODO - are there other limitations?
 
 In this project, our goal is to extend the confident guarantees of Safe Rust to low-level systems programming paradigms. We will take an operating system written in Rust as an example, categorize patterns of necessary usage for \texttt{unsafe} code, and attempt to statically verify that this usage still adheres to the safety guarantees of Rust mentioned previously. 
 
-Depending on the patterns encountered, the needs of this guarantee may differ. For many of the internal data structures we expect the process to look similar to the extensible approach taken by RustBelt, while we expect new approaches to be necessary for other patterns of \texttt{unsafe} usage.
+Depending on the patterns encountered, the needs of this guarantee may differ. For many of the internal data structures, we expect the process to look similar to the extensible approach taken by RustBelt, while we expect new approaches to be necessary for other patterns of \texttt{unsafe} usage.
 
 One of the first ways to increase confidence in the code is to decrease the number of places where \texttt{unsafe} is used. Thus, before attempting to make claims about necessary \texttt{unsafe} code, we will attempt to isolate and reduce the usages of \texttt{unsafe} where possible. Reducing the number of locations of \texttt{unsafe} restricts the number of places where the burden is on the programmer to ensure safety, and allows the compiler to take the burden of safety in all other sections.
 
@@ -83,7 +83,7 @@ Before describing our proposed contribution and its effectiveness, we first will
 \subsection{Safety of Rust}
 Rust's approach to memory safety involves the use of an extensive ownership system integrated into its type system. This ownership system is able to provide both memory and concurrency safety. 
 
-In this system, variable bindings ``have ownership" of the data they're bound to~\cite{rust_book}.
+In this system, variable bindings ``have ownership" of the data to which they are bound~\cite{rust_book}.
 For this reason, Rust also prevents more than one variable from being bound to a piece of data. Reassignment is processed with move or copy semantics, instead of aliasing as in many other programming languages.
 %TODO - should I include an example here.
 
@@ -94,12 +94,12 @@ A reference also has an associated lifetime marked in the type system. The lifet
 These ownership rules are formalized in the RustBelt system and proven correct for its formalization of Safe Rust. However, they are not guaranteed to hold in places where \texttt{unsafe} is used. RustBelt attempts to reason about these sections of code with the ideas of syntactic and semantic correctness.
 
 \subsection{Syntactic and Semantic correctness}
-Most systems programmers are not trying to write incorrect code. The programmer has some sort of internal intuitive argument for why their code is correct and type-safe, even though the compiler may disagree.
+Most systems programmers are not trying to write incorrect code. The programmer has an intuitive argument for why their code is correct and type-safe, even though the compiler may disagree.
 
 One canonical example of this is interior mutability, or the idea of mutation through a shared reference. This is explicitly forbidden by the ownership rules above, which state that no more than one reference to a piece of data can exist if that one reference is mutable. However, this functionality is still available in Rust, through a standard library construct called Cell.
 %TODO - should I expand on Cell more here?
 
-By necessity, Cell is implemented in Rust using the \texttt{unsafe} keyword. However, the RustBelt project was still able to prove that its API adhered to the restrictions of Safe Rust. That is, through careful restrictions of \texttt{unsafe} usage, the code still behaves like safe code (semantic correctness), even though it doesn't adhere to the strict rules of the type-checker (syntactic correctness).
+By necessity, Cell is implemented in Rust using the \texttt{unsafe} keyword. However, the RustBelt project was still able to prove that its API adhered to the restrictions of Safe Rust. That is, through careful restrictions of \texttt{unsafe} usage, the code still behaves like safe code (semantic correctness), even though it does not adhere to the strict rules of the type-checker (syntactic correctness).
 
 \subsection{RustBelt for Unsafe Rust}
 RustBelt provides a way to specify what must be proved in order to confirm that a library API actually does constitute a sound extension of Rust's type system. Given a description of the API, it will generate obligations that the user must prove hold before they can say that the described API is safe to use.
@@ -107,7 +107,7 @@ RustBelt provides a way to specify what must be proved in order to confirm that 
 There is also included machinery for determining that implementations of the API actually adhere to the typing specifications provided, and examples of this in the proofs of the standard libraries.
 
 \subsection{Tock}
-Tock is an embedded operating system written entirely in Rust to take advantage of the additional safety properties Rust provides over C/C++, which most other operating systems are written in.
+Tock is an embedded operating system written entirely in Rust to take advantage of the additional safety properties Rust provides over C/C++, in which most other operating systems are written.
 
 Within this operating system, there are a number of data structures with safe APIs used by the rest of the codebase. These data structures should be able to be proven semantically correct with minor addition to the RustBelt framework.
 
@@ -121,7 +121,7 @@ Writers of operating systems are aware of the restrictions of Rust and the neces
 
 We suspect that there are other instances where similar tradeoffs exist. We expect to be able to further reduce or eliminate \texttt{unsafe} code in other similar data structures in the near future, and to be able to generate documentation to help developers understand how to accomplish similar tasks without needing to default to \texttt{unsafe}.
 
-As we encounter irreducible blocks of \texttt{unsafe} code, we will document and categorize them. We hope to see duplicated patterns that allow us to factor out many \texttt{unsafe} uses into shared libraries with safe APIs, which would allow us to leverage the RustBelt machinery to prove these pieces correct.
+As we encounter irreducible blocks of \texttt{unsafe} code, we will document and categorize them. We hope to see repeated patterns that allow us to factor out many \texttt{unsafe} uses into shared libraries with safe APIs, which would allow us to leverage the RustBelt machinery to prove these pieces correct.
 
 We fully expect to encounter paradigms of \texttt{unsafe} use that do not fall into the previous categories of reduction or abstraction. For instance, we do not expect it to be possible to reduce inline assembly, nor to abstract it away. Often times these sections of assembly code are needed to perform specific hardware-dependent operations that are beyond the abstract scope of Rust's safety model. These sections may not adhere to Rust's syntax OR semantics, as assembly is a different programming language in itself. In these cases, we hope to at least be able to isolate the \texttt{unsafe} code, and write proofs (maybe handwritten but preferably machine-checked) about the correctness of such sections.
 
@@ -141,7 +141,7 @@ We fully expect to encounter paradigms of \texttt{unsafe} use that do not fall i
 \end{itemize}
 
 \section{Alternative approaches}
-This is not the only way we could approach adding safety to an operating system. Here we will discuss other approaches that have been taken and the trade-offs they have.
+This is not the only way we could approach adding safety to an operating system. Here we discuss other approaches that have been taken and the trade-offs they have.
 
 \subsection{Improved static checking}
 Instead of only addressing the current uses of \texttt{unsafe} in the codebase, we could instead attempt to improve the overall static type-checking capabilities of Rust, perhaps incorporating some of the reasoning about syntactic and semantic correctness.
@@ -151,12 +151,12 @@ Unfortunately, current systems have a difficult time with automated reasoning ab
 \subsection{Software testing}
 We could instead use standard bug-finding techniques to find errors in the system, including writing large test suites with many edge cases and using fuzzers. 
 
-We actually recommend this approach be pursued in combination with the proof techniques in our proposed work. While having proofs of correctness offers guarantees of safety that one cannot acquire otherwise, these proofs will always rely on assumptions of the system. Formally verifying a system is not enough to guarantee that it is error-free\cite{fonseca2017empirical}. Bug-finding tools can serve to spot-check and make sure the system assumptions hold.
+We actually recommend this approach be pursued in combination with the proof techniques in our proposed work. While having proofs of correctness offers guarantees of safety that one cannot acquire otherwise, these proofs will always rely on assumptions of the system. Formally verifying a system is not enough to guarantee that it is error-free~\cite{fonseca2017empirical}. Bug-finding tools can serve to spot-check and make sure the system assumptions hold.
     
 \subsection{Error detection/mitigation}
 Instead of the above compile-time options, checks can be included at runtime to detect when errors have occurred and attempt to mitigate the damage done. 
 
-This again has no guarantees of safety. However, in places where proof boundaries exist, having runtime instrumentation to check that our assumptions haven't been violated can serve to reinforce our confidence in the safety of the system.
+This again has no guarantees of safety. However, in places where proof boundaries exist, having runtime instrumentation to check that our assumptions have not been violated can serve to reinforce our confidence in the safety of the system.
 
 One specific place where this can be seen is the hardware boundary. %TODO - info on Alex's project with tags, contact him for more info
 
